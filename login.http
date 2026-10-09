@@ -1,0 +1,32 @@
+### 4.1) Login (se o token já estiver capturado, pode pular)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin1@monisom.com",
+  "password": "admin123"
+}
+
+> {% client.global.set("token", response.body.token) %}
+
+### 4.2) Listar turmas da Escola 1
+GET http://localhost:8080/api/classes
+Authorization: Bearer {{token}}
+Accept: application/json
+
+
+### 5.1) Listar professores lotados na Turma 1D
+GET http://localhost:8080/api/classes/4b0c9385-2819-4a6c-bac7-13dc01301de2/teachers
+Authorization: Bearer {{token}}
+Accept: application/json
+
+
+### 5.2) Lotar Professor Quatro na Turma 1D
+POST http://localhost:8080/api/classes/4b0c9385-2819-4a6c-bac7-13dc01301de2/teachers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "teacherId": "bb63232d-874a-4626-a453-ddb69448c2b4"
+}
