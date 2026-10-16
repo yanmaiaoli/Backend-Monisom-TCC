@@ -6,6 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -40,7 +43,12 @@ public class ReadingProducer {
                 return;
             }
             for (MonitoringReading r : readings) {
-                kafkaTemplate.send(topic, r.getMonitoringId().toString(), toJson(r));
+                Message<String> message = MessageBuilder.withPayload(toJson(r))
+                        .setHeader(KafkaHeaders.TOPIC, topic)
+                        .setHeader(KafkaHeaders.KEY, r.getMonitoringId().toString())
+                        .setHeader(KafkaHeaders.TIMESTAMP, r.getRecordedAt().toInstant().toEpochMilli())
+                        .build();
+                kafkaTemplate.send(message);
                 lastSeq = r.getSeq();
             }
             log.info("Produtor: {} leitura(s) enviadas para o tópico '{}' (lastSeq={})",
