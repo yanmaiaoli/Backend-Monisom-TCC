@@ -1,0 +1,120 @@
+@startuml
+hide circle
+hide empty members
+skinparam classAttributeIconSize 0
+
+enum Turno {
+  matutino
+  vespertino
+  noturno
+}
+
+enum LeqLevel {
+  COMFORTABLE
+  ADEQUATE
+  ATTENTION
+  CRITICAL
+}
+
+enum AlertType {
+  HIGH_LEVEL
+  HIGH_PEAK
+}
+
+enum Severity {
+  HIGH
+  CRITICAL
+}
+
+class School {
+  name : String
+}
+
+class Room {
+  name : String
+}
+
+class ClassGroup {
+  name : String
+  capacidade : Integer
+  turno : Turno
+}
+
+class Teacher {
+  name : String
+  email : String
+}
+
+class SchoolAdmin {
+  name : String
+  email : String
+  passwordHash : String
+}
+
+class SchoolTeacher
+
+class ClassTeacher
+
+class Monitoring {
+  startedAt : DateTime
+  finishedAt : DateTime
+  perception : Integer
+  stress : Integer
+}
+
+class MonitoringReading {
+  recordedAt : DateTime
+  laeq : Double
+  seq : Long
+}
+
+class MonitoringWindow {
+  windowStart : DateTime
+  windowEnd : DateTime
+  leq : Double
+  lmin : Double
+  lmax : Double
+  count : Long
+  l10 : Double
+  l50 : Double
+  l90 : Double
+}
+
+class MonitoringSummary {
+  leqTotal : Double
+  lmin : Double
+  lmax : Double
+  count : Long
+  level : LeqLevel
+  l10 : Double
+  l50 : Double
+  l90 : Double
+}
+
+class MonitoringAlert {
+  type : AlertType
+  severity : Severity
+  value : Double
+  message : String
+  windowEnd : DateTime
+}
+
+Room "N" --> "1" School
+ClassGroup "N" --> "1" School
+SchoolAdmin "N" --> "1" School
+
+SchoolTeacher "N" --> "1" School
+SchoolTeacher "N" --> "1" Teacher
+
+ClassTeacher "N" --> "1" ClassGroup
+ClassTeacher "N" --> "1" Teacher
+
+Monitoring "N" --> "1" ClassGroup
+Monitoring "N" --> "1" Teacher
+Monitoring "N" --> "1" Room
+
+MonitoringReading "N" --> "1" Monitoring
+MonitoringWindow "N" --> "1" Monitoring
+MonitoringSummary "0..1" --> "1" Monitoring
+MonitoringAlert "N" --> "1" Monitoring
+@enduml

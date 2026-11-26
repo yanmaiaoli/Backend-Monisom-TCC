@@ -2,7 +2,6 @@ package com.monisom.kafka;
 
 import com.monisom.kafka.model.WindowedReading;
 import com.monisom.repository.MonitoringWindowRepository;
-import com.monisom.service.MonitoringSnapshot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -18,17 +17,16 @@ public class WindowPersistenceListener {
     private static final Logger log = LoggerFactory.getLogger(WindowPersistenceListener.class);
 
     private final MonitoringWindowRepository repository;
-    private final MonitoringSnapshot snapshot;
 
-    public WindowPersistenceListener(MonitoringWindowRepository repository, MonitoringSnapshot snapshot) {
+    public WindowPersistenceListener(MonitoringWindowRepository repository) {
         this.repository = repository;
-        this.snapshot = snapshot;
     }
 
     @KafkaListener(topics = "monitoring-window-aggregate",
             containerFactory = "windowReadingKafkaListenerContainerFactory")
     @Transactional
     public void onWindow(WindowedReading reading) {
+        // consome a janela agregada e a persiste na tabela monitoring_window
         repository.upsert(
                 UUID.fromString(reading.monitoringId()),
                 reading.windowStart().atOffset(ZoneOffset.UTC),
@@ -40,7 +38,6 @@ public class WindowPersistenceListener {
                 reading.l10(),
                 reading.l50(),
                 reading.l90());
-        snapshot.updateWindow(reading);
         log.info("Janela persistida: monitoring={} inicio={} leq={} (count={})",
                 reading.monitoringId(), reading.windowStart(), reading.leq(), reading.count());
     }

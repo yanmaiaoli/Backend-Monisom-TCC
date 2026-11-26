@@ -1,0 +1,58 @@
+@startuml
+
+skinparam componentStyle rectangle
+skinparam linetype ortho
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam nodesep 120
+skinparam ranksep 100
+<style>
+  diagram {
+    Padding 6
+  }
+</style>
+skinparam ArrowThickness 1.2
+skinparam ArrowColor #222222
+skinparam ArrowFontSize 11
+skinparam backgroundColor #FFFFFF
+
+skinparam rectangle {
+  BorderColor #222222
+  BackgroundColor #F2F2F2
+}
+skinparam database {
+  BorderColor #222222
+  BackgroundColor #F2F2F2
+}
+skinparam actor {
+  BorderColor #222222
+  BackgroundColor #FFFFFF
+}
+
+actor "Diretor / Administrador" as diretor
+actor "Professor" as professor
+actor "Aluno" as aluno
+
+rectangle "Plataforma de\nprocessamento\nde eventos" as eventos
+rectangle "               Painel de gestão               " as painel
+rectangle "                      Aplicação móvel                      " as app
+rectangle "\n              Serviços (backend)              \n" as backend
+database "                      Banco de dados                      " as db
+
+diretor -down-> painel : usa
+professor -down-> app : usa
+aluno -down-> app : gera o ruído
+
+painel <-down-> backend : consulta\n(requisição/resposta)
+eventos <-right-> backend : entrega resultados\ne processa eventos
+backend <-right-> db : lê e grava dados
+app <-down-> db : grava leituras e lê cadastros
+
+professor -[hidden]right- aluno
+painel -[hidden]right- app
+eventos -[hidden]right- backend
+backend -[hidden]right- db
+
+@enduml

@@ -35,7 +35,9 @@ public final class ReadingWindowAggregator {
                 Consumed.with(Serdes.String(), Serdes.String())
         );
 
+        // agrega as leituras em janelas de 2 minutos e calcula os descritores
         source
+                .filter((key, json) -> parseLaeq(json) != null)
                 .mapValues(ReadingWindowAggregator::parseLaeq)
                 .groupByKey(Grouped.with(Serdes.String(), Serdes.Double()))
                 .windowedBy(TimeWindows.ofSizeAndGrace(Duration.ofMinutes(2), Duration.ofMinutes(1)))
@@ -49,6 +51,7 @@ public final class ReadingWindowAggregator {
                                 .withKeySerde(Serdes.String())
                                 .withValueSerde(KafkaSerdes.READING_AGGREGATE)
                 )
+                // só emite o resultado quando a janela fecha
                 .suppress(Suppressed.untilWindowCloses(Suppressed.BufferConfig.unbounded()))
                 .toStream()
                 .map((windowedKey, agg) -> KeyValue.pair(
@@ -71,21 +74,28 @@ public final class ReadingWindowAggregator {
         return builder.build();
     }
 
-    private static double parseLaeq(String json) {
-
+    /**
+     * Extrai o laeq do JSON. Retorna null quando a mensagem é nula,
+     * não tem o campo "laeq" ou o valor não é um número válido.
+     */
+    private static Double parseLaeq(String json) {
+        if (json == null) {
+            return null;
+        }
         int idx = json.indexOf("\"laeq\":");
         if (idx < 0) {
-            return 0.0;
+            return null;
         }
         int start = idx + "\"laeq\":".length();
-        int end = json.indexOf('}', start);
-        if (end < 0) {
-            end = json.length();
+        int end = start;
+        while (end < json.length() && json.charAt(end) != ',' && json.charAt(end) != '}') {
+            end++;
         }
         try {
-            return Double.parseDouble(json.substring(start, end).trim());
+            double value = Double.parseDouble(json.substring(start, end).trim());
+            return Double.isFinite(value) ? value : null;
         } catch (NumberFormatException e) {
-            return 0.0;
+            return null;
         }
     }
 }

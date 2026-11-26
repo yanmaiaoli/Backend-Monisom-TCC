@@ -33,8 +33,10 @@ public class MonitoringResultService {
 
     @Transactional
     public void finalize(UUID monitoringId) {
+        // preenche a última janela parcial a partir das leituras cruas
         readingRepository.backfillWindows(monitoringId);
 
+        // calcula o nível equivalente total e os percentis do período
         List<Object[]> rows = readingRepository.computeTotal(monitoringId);
         if (rows.isEmpty()) {
             return;
@@ -52,6 +54,7 @@ public class MonitoringResultService {
         double l50 = ((Number) row[5]).doubleValue();
         double l90 = ((Number) row[6]).doubleValue();
 
+        // classifica o nível e grava o sumário
         String level = LeqLevel.from(leqTotal).name();
         summaryRepository.upsert(monitoringId, leqTotal, lmin, lmax, count, level, l10, l50, l90);
     }

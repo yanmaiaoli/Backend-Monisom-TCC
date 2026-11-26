@@ -12,7 +12,10 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Component
 public class ReadingProducer {
@@ -22,8 +25,6 @@ public class ReadingProducer {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final MonitoringReadingRepository repository;
     private final String topic;
-
-    private long lastSeq = 0L;
 
     public ReadingProducer(
             KafkaTemplate<String, String> kafkaTemplate,
@@ -37,23 +38,35 @@ public class ReadingProducer {
     @Scheduled(fixedDelayString = "${app.kafka.producer.poll-ms:5000}")
     public void poll() {
         try {
+            // lê as leituras pendentes do banco, em ordem de sequência,
+            // a partir do último seq persistido
+            long lastSeq = Optional.ofNullable(repository.findLastSeq()).orElse(0L);
             List<MonitoringReading> readings =
                     repository.findTop1000BySeqGreaterThanOrderBySeqAsc(lastSeq);
             if (readings.isEmpty()) {
                 return;
             }
+
+            // publica cada leitura no Kafka, usando o id do monitoramento como chave,
+            // e aguarda a confirmação do broker antes de avançar o cursor
+            List<CompletableFuture<?>> sends = new ArrayList<>();
             for (MonitoringReading r : readings) {
                 Message<String> message = MessageBuilder.withPayload(toJson(r))
                         .setHeader(KafkaHeaders.TOPIC, topic)
                         .setHeader(KafkaHeaders.KEY, r.getMonitoringId().toString())
                         .setHeader(KafkaHeaders.TIMESTAMP, r.getRecordedAt().toInstant().toEpochMilli())
                         .build();
-                kafkaTemplate.send(message);
-                lastSeq = r.getSeq();
+                sends.add(kafkaTemplate.send(message));
             }
+
+            CompletableFuture.allOf(sends.toArray(new CompletableFuture[0])).get();
+
+            long newLastSeq = readings.get(readings.size() - 1).getSeq();
+            repository.updateLastSeq(newLastSeq);
             log.info("Produtor: {} leitura(s) enviadas para o tópico '{}' (lastSeq={})",
-                    readings.size(), topic, lastSeq);
+                    readings.size(), topic, newLastSeq);
         } catch (Exception e) {
+            // não avança o lastSeq; o lote é reprocessado no próximo ciclo
             log.error("Erro no produtor de leituras: {}", e.getMessage(), e);
         }
     }

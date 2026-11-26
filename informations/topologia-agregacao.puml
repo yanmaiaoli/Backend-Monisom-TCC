@@ -1,0 +1,71 @@
+@startuml
+hide stereotype
+skinparam shadowing false
+skinparam linetype ortho
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ranksep 18
+skinparam nodesep 12
+skinparam ArrowColor #555555
+skinparam ArrowThickness 1
+
+skinparam queue {
+  BackgroundColor #E2E2E2
+  BorderColor #555555
+  BorderThickness 2
+}
+skinparam rectangle<<lbl>> {
+  BackgroundColor transparent
+  BorderColor transparent
+}
+
+title Topologia de agregação por janela
+
+queue "monitoring-reading" as src
+queue "monitoring-window-aggregate" as sink
+
+circle " " as c1
+circle " " as c2
+circle " " as c3
+circle " " as c4
+circle " " as c5
+circle " " as c6
+circle " " as c7
+circle " " as c8
+circle " " as c9
+circle " " as c10
+
+rectangle "stream" as l1 <<lbl>>
+rectangle "filter" as l2 <<lbl>>
+rectangle "mapValues" as l3 <<lbl>>
+rectangle "groupByKey" as l4 <<lbl>>
+rectangle "windowedBy" as l5 <<lbl>>
+rectangle "aggregate" as l6 <<lbl>>
+rectangle "suppress" as l7 <<lbl>>
+rectangle "toStream" as l8 <<lbl>>
+rectangle "map" as l9 <<lbl>>
+rectangle "to" as l10 <<lbl>>
+
+c1 -[hidden]right- l1
+c2 -[hidden]right- l2
+c3 -[hidden]right- l3
+c4 -[hidden]right- l4
+c5 -[hidden]right- l5
+c6 -[hidden]right- l6
+c7 -[hidden]right- l7
+c8 -[hidden]right- l8
+c9 -[hidden]right- l9
+c10 -[hidden]right- l10
+
+src --> c1
+c1 --> c2
+c2 --> c3
+c3 --> c4
+c4 --> c5
+c5 --> c6
+c6 --> c7
+c7 --> c8
+c8 --> c9
+c9 --> c10
+c10 --> sink
+@enduml

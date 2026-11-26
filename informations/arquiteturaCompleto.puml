@@ -1,0 +1,94 @@
+@startuml
+
+skinparam componentStyle rectangle
+skinparam linetype ortho
+skinparam shadowing false
+skinparam roundCorner 0
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam nodesep 60
+skinparam ranksep 100
+<style>
+  diagram {
+    Padding 6
+  }
+</style>
+skinparam ArrowThickness 1.2
+skinparam ArrowColor #222222
+skinparam ArrowFontSize 13
+skinparam backgroundColor #FFFFFF
+
+skinparam package {
+  BorderColor #222222
+  BorderThickness 1.5
+  BackgroundColor #FFFFFF
+  FontStyle bold
+}
+skinparam rectangle {
+  BorderColor #222222
+  BackgroundColor #F2F2F2
+}
+skinparam node {
+  BorderColor #222222
+  BackgroundColor #F2F2F2
+}
+skinparam database {
+  BorderColor #222222
+  BackgroundColor #F2F2F2
+}
+skinparam actor {
+  BorderColor #222222
+  BackgroundColor #FFFFFF
+}
+
+actor "Professor" as professor
+actor "Diretor / Administrador" as diretor
+actor "Aluno" as aluno
+
+package "Frontend" {
+  [MoniSom Admin (React + MUI)] as front
+}
+
+[Sala de aula (ruido)] as sala
+
+package "Mobile" {
+  [MoniSom App (Android)] as app
+}
+
+package "Backend" {
+  [Kafka Streams] as streams
+  [Consumers] as consumers
+  [Producer] as producer
+  [Jobs] as jobs
+  [API REST] as api
+  database "Supabase (PostgreSQL)" as db
+
+  streams -[hidden]right- consumers
+  consumers -[hidden]right- producer
+  producer -[hidden]right- jobs
+  jobs -[hidden]right- api
+}
+
+node "Kafka Cluster (KRaft)" as kafka
+kafka -[hidden]right- front
+
+' Atores na mesma linha: Diretor, Professor (esquerda), Aluno (direita)
+diretor -[hidden]right- professor
+professor -[hidden]right- aluno
+
+diretor --> front : usa
+aluno --> sala : gera o ruído
+sala --> app : microfone captura
+professor -down--> app : usa
+
+app <--> db : 1
+producer -down-> db : 2
+producer -up-> kafka : 3
+streams <-up-> kafka : 4
+consumers <-up- kafka : 5
+consumers -down-> db : 6
+jobs -down-> db : 7
+api <-down-> db : 8
+front <-down-> api : 9
+
+@enduml

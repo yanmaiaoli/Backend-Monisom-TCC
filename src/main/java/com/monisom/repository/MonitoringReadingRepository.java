@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -13,6 +14,14 @@ import java.util.UUID;
 public interface MonitoringReadingRepository extends JpaRepository<MonitoringReading, UUID> {
 
     List<MonitoringReading> findTop1000BySeqGreaterThanOrderBySeqAsc(Long seq);
+
+    @Query(value = "select last_seq from producer_state where id = 1", nativeQuery = true)
+    Long findLastSeq();
+
+    @Modifying
+    @Transactional
+    @Query(value = "update producer_state set last_seq = :seq where id = 1", nativeQuery = true)
+    void updateLastSeq(@Param("seq") long seq);
 
     @Modifying
     @Query("DELETE FROM MonitoringReading r WHERE r.recordedAt < :cutoff")

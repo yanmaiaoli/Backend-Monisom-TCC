@@ -1,6 +1,6 @@
 package com.monisom.kafka;
 
-import com.monisom.kafka.processor.AlertStateProcessor;
+import com.monisom.kafka.processor.AlertProcessor;
 import com.monisom.kafka.processor.ReadingWindowAggregator;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -31,10 +31,11 @@ public class KafkaStreamsRunner {
         this.bootstrapServers = bootstrapServers;
     }
 
+    // inicia as duas topologias: agregação em janelas e alertas
     @PostConstruct
     public void start() {
         streams.add(start("reading-window-aggregator", ReadingWindowAggregator.buildTopology()));
-        streams.add(start("alert-state-processor", AlertStateProcessor.buildTopology()));
+        streams.add(start("alert-processor", AlertProcessor.buildTopology()));
     }
 
     @PreDestroy
@@ -49,6 +50,7 @@ public class KafkaStreamsRunner {
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         props.put(StreamsConfig.consumerPrefix(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG), "earliest");
+        // estado local (RocksDB) das janelas, persistido em disco
         props.put(StreamsConfig.STATE_DIR_CONFIG, "./data/kafka-streams");
 
         KafkaStreams kafkaStreams = new KafkaStreams(topology, props);

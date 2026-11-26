@@ -1,0 +1,43 @@
+@startuml
+hide stereotype
+skinparam shadowing false
+skinparam linetype ortho
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam ranksep 18
+skinparam nodesep 12
+skinparam ArrowColor #555555
+skinparam ArrowThickness 1
+
+skinparam queue {
+  BackgroundColor #E2E2E2
+  BorderColor #555555
+  BorderThickness 2
+}
+skinparam rectangle<<lbl>> {
+  BackgroundColor transparent
+  BorderColor transparent
+}
+
+title Topologia de alertas
+
+queue "monitoring-window-aggregate" as src
+queue "alerts" as sink
+
+circle " " as c1
+circle " " as c2
+circle " " as c3
+
+rectangle "stream" as l1 <<lbl>>
+rectangle "flatMapValues" as l2 <<lbl>>
+rectangle "to" as l3 <<lbl>>
+
+c1 -[hidden]right- l1
+c2 -[hidden]right- l2
+c3 -[hidden]right- l3
+
+src --> c1
+c1 --> c2
+c2 --> c3
+c3 --> sink
+@enduml

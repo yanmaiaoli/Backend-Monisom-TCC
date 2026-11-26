@@ -29,4 +29,19 @@ public interface MonitoringAlertRepository extends JpaRepository<MonitoringAlert
                @Param("value") double value,
                @Param("message") String message,
                @Param("windowEnd") OffsetDateTime windowEnd);
+
+    @Query(value = """
+            SELECT count(*)
+            FROM monitoring_alert a
+            JOIN monitoring m ON m.id = a.monitoring_id
+            JOIN class c ON c.id = m.class_id
+            WHERE c.school_id = :schoolId
+              AND m.started_at >= :from
+              AND m.started_at < :to
+              AND (:turno = '' OR c.turno::text = :turno)
+            """, nativeQuery = true)
+    List<Object[]> countIndicators(@Param("schoolId") UUID schoolId,
+                                   @Param("from") OffsetDateTime from,
+                                   @Param("to") OffsetDateTime to,
+                                   @Param("turno") String turno);
 }

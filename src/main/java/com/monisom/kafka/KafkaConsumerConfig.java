@@ -21,6 +21,7 @@ public class KafkaConsumerConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
+    // consumidor de janelas: valor desserializado como WindowedReading (JSON)
     @Bean
     public ConsumerFactory<String, WindowedReading> windowReadingConsumerFactory() {
         return new DefaultKafkaConsumerFactory<>(
@@ -56,7 +57,9 @@ public class KafkaConsumerConfig {
     private Map<String, Object> consumerConfig(String groupId) {
         Map<String, Object> config = new HashMap<>();
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        // grupo de consumidores que compartilha a leitura dos tópicos
         config.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        // começa a ler do início quando não há deslocamento salvo
         config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         return config;
     }

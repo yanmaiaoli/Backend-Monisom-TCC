@@ -1,3 +1,4 @@
+# Kafka em modo KRaft (sem ZooKeeper): três brokers em contêineres Docker.
 services:
   kafka-1:
     image: apache/kafka:3.7.1

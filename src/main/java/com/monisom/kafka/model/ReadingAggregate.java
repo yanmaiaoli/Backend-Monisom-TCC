@@ -19,6 +19,7 @@ public class ReadingAggregate {
     private double max = -Double.MAX_VALUE;
     private List<Double> samples = new ArrayList<>();
 
+    // acumula a energia (e não os dB) e guarda as amostras para os percentis
     public void add(double laeq) {
         energySum += Math.pow(10, laeq / 10.0);
         count++;
@@ -31,6 +32,7 @@ public class ReadingAggregate {
         samples.add(laeq);
     }
 
+    // nível equivalente: média energética das leituras da janela
     public double leq() {
         return count > 0 ? 10.0 * Math.log10(energySum / count) : 0.0;
     }

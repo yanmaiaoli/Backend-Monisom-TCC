@@ -1,0 +1,23 @@
+@startuml
+hide circle
+hide empty members
+skinparam classAttributeIconSize 0
+
+class School
+class Room
+class ClassGroup
+class Teacher
+class SchoolAdmin
+class Monitoring
+
+Room "N" --> "1" School
+ClassGroup "N" --> "1" School
+SchoolAdmin "N" --> "1" School
+
+Teacher "N" -- "N" School
+Teacher "N" -- "N" ClassGroup
+
+Monitoring "N" --> "1" ClassGroup
+Monitoring "N" --> "1" Teacher
+Monitoring "N" --> "1" Room
+@enduml

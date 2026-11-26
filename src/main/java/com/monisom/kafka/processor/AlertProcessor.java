@@ -4,7 +4,6 @@ import com.monisom.kafka.KafkaSerdes;
 import com.monisom.kafka.model.Alert;
 import com.monisom.kafka.model.AlertType;
 import com.monisom.kafka.model.LeqLevel;
-import com.monisom.kafka.model.LeqStatus;
 import com.monisom.kafka.model.Severity;
 import com.monisom.kafka.model.WindowedReading;
 import org.apache.kafka.common.serialization.Serdes;
@@ -17,10 +16,9 @@ import org.apache.kafka.streams.kstream.Produced;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class AlertStateProcessor {
+public final class AlertProcessor {
 
     public static final String SOURCE_TOPIC = "monitoring-window-aggregate";
-    public static final String STATE_TOPIC = "monitoring-state";
     public static final String ALERTS_TOPIC = "alerts";
 
     private static final double COMFORT_LIMIT = 35.0;
@@ -28,7 +26,7 @@ public final class AlertStateProcessor {
     private static final double CRITICAL_LIMIT = 85.0;
     private static final double PEAK_THRESHOLD = 90.0;
 
-    private AlertStateProcessor() {
+    private AlertProcessor() {
     }
 
     public static Topology buildTopology() {
@@ -40,25 +38,13 @@ public final class AlertStateProcessor {
         );
 
         source
-                .mapValues(AlertStateProcessor::toStatus)
-                .to(STATE_TOPIC, Produced.with(Serdes.String(), KafkaSerdes.LEQ_STATUS));
-
-        source
-                .flatMapValues(AlertStateProcessor::evaluateAlerts)
+                .flatMapValues(AlertProcessor::evaluateAlerts)
                 .to(ALERTS_TOPIC, Produced.with(Serdes.String(), KafkaSerdes.ALERT));
 
         return builder.build();
     }
 
-    private static LeqStatus toStatus(WindowedReading r) {
-        return new LeqStatus(
-                r.monitoringId(),
-                levelOf(r.leq()),
-                r.leq(),
-                r.windowEnd()
-        );
-    }
-
+    // classifica o nível a partir do leq (limiares de conforto)
     private static LeqLevel levelOf(double leq) {
         if (leq <= COMFORT_LIMIT) {
             return LeqLevel.COMFORTABLE;
@@ -72,6 +58,7 @@ public final class AlertStateProcessor {
         return LeqLevel.CRITICAL;
     }
 
+    // gera alertas de nível alto (atenção/crítico) e de pico alto (lmax > 90 dB)
     private static List<Alert> evaluateAlerts(WindowedReading r) {
         List<Alert> alerts = new ArrayList<>();
         LeqLevel level = levelOf(r.leq());
